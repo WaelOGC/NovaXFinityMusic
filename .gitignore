@@ -1,0 +1,10 @@
+node_modules/
+.env
+dist/
+uploads/covers/*
+uploads/audio/*
+!uploads/covers/.gitkeep
+!uploads/audio/.gitkeep
+*.log
+.DS_Store
+.vite/
