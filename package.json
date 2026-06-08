@@ -2,15 +2,11 @@
   "name": "musicapp",
   "version": "1.0.0",
   "scripts": {
-    "install:all": "cd backend && npm install",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "build": "cd frontend && vite build",
+    "build": "cd frontend && npm install && npm run build",
     "start": "cd backend && npm start"
   },
-  "description": "Personal Music Streaming Platform",
-  "devDependencies": {
-    "vite": "^5.4.21",
-    "@vitejs/plugin-react": "^4.3.4"
-  }
+  "description": "Personal Music Streaming Platform"
 }
