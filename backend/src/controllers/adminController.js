@@ -3,13 +3,15 @@ const path = require('path');
 const fs = require('fs');
 const { pool } = require('../models/db');
 
+const API_URL = process.env.API_URL || 'https://api.novaxfinity.com';
+
 // ─── Albums ───────────────────────────────────────────────────────────────────
 const createAlbum = async (req, res) => {
   try {
     const { title, artist, release_year, genre, description, is_premium } = req.body;
     if (!title || !artist) return res.status(400).json({ error: 'Title and artist required' });
 
-    const cover_url = req.file ? `/uploads/covers/${req.file.filename}` : null;
+    const cover_url = req.file ? `${API_URL}/uploads/covers/${req.file.filename}` : null;
     const id = uuidv4();
     await pool.query(
       'INSERT INTO albums (id, title, artist, cover_url, release_year, genre, description, is_premium) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -33,7 +35,7 @@ const updateAlbum = async (req, res) => {
     if (genre) updates.genre = genre;
     if (description !== undefined) updates.description = description;
     if (is_premium !== undefined) updates.is_premium = is_premium === 'true';
-    if (req.file) updates.cover_url = `/uploads/covers/${req.file.filename}`;
+    if (req.file) updates.cover_url = `${API_URL}/uploads/covers/${req.file.filename}`;
 
     const keys = Object.keys(updates);
     if (!keys.length) return res.status(400).json({ error: 'No fields to update' });
@@ -64,10 +66,8 @@ const createTrack = async (req, res) => {
     const audioFile = req.files?.audio?.[0];
     if (!audioFile) return res.status(400).json({ error: 'Audio file required' });
 
-    const audio_url = `/uploads/audio/${audioFile.filename}`;
+    const audio_url = `${API_URL}/uploads/audio/${audioFile.filename}`;
     const id = uuidv4();
-
-    // Get duration from metadata if possible (simple estimate)
     const duration = req.body.duration ? parseInt(req.body.duration) : null;
 
     await pool.query(
@@ -92,7 +92,7 @@ const updateTrack = async (req, res) => {
     if (lyrics_lrc !== undefined) updates.lyrics_lrc = lyrics_lrc;
     if (is_premium !== undefined) updates.is_premium = is_premium === 'true';
     if (duration) updates.duration = duration;
-    if (req.files?.audio?.[0]) updates.audio_url = `/uploads/audio/${req.files.audio[0].filename}`;
+    if (req.files?.audio?.[0]) updates.audio_url = `${API_URL}/uploads/audio/${req.files.audio[0].filename}`;
 
     const keys = Object.keys(updates);
     if (!keys.length) return res.status(400).json({ error: 'No fields to update' });
@@ -109,7 +109,8 @@ const deleteTrack = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT audio_url FROM tracks WHERE id = ?', [req.params.id]);
     if (rows.length && rows[0].audio_url) {
-      const filePath = path.join(__dirname, '../../', rows[0].audio_url);
+      const filename = path.basename(rows[0].audio_url);
+      const filePath = path.join(__dirname, '../../uploads/audio', filename);
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
     await pool.query('DELETE FROM tracks WHERE id = ?', [req.params.id]);
